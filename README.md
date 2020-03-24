@@ -1,2 +1,2 @@
-# whats-peer
+# WhatsPeer
 A decentralized chat app.
