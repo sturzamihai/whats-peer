@@ -1,27 +1,27 @@
 #ifndef BLOCKCHAIN_BLOCK_H
 #define BLOCKCHAIN_BLOCK_H
 #include <cstdint>
+#include <ctime>
 #include <iostream>
 
 class Block {
 public:
-    Block(uint32_t index, const std::string data);
+    Block(std::string index, std::string data, int64_t nonce, std::string prevHash, time_t timeStamp);
 
-    std::string GetHash();
+    std::string GenerateHash();
 
-    uint32_t GetIndex();
-
-    void MineBlock(uint32_t difficulty);
+    std::string GetPrevHash();
 
 private:
-    uint32_t _Index;
-    int64_t _Nonce;
-    std::string _PrevHash;
+
+    std::string _Index;
     std::string _Data;
-    std::string _Hash;
-    time_t _Time;
-    std::string _CalculateHash() const;
+    int64_t _Nonce;
+    std::string _PreviousHash;
+    time_t _TimeStamp;
+
 };
+
 #endif //BLOCKCHAIN_BLOCK_H
 
 
