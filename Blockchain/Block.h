@@ -5,17 +5,18 @@
 
 class Block {
 public:
-    std::string PrevHash;
-
-    Block(uint32_t IndexIn, const std::string &DataIn);
+    Block(uint32_t index, const std::string data);
 
     std::string GetHash();
 
-    void MineBlock(uint32_t Difficulty);
+    uint32_t GetIndex();
+
+    void MineBlock(uint32_t difficulty);
 
 private:
     uint32_t _Index;
     int64_t _Nonce;
+    std::string _PrevHash;
     std::string _Data;
     std::string _Hash;
     time_t _Time;

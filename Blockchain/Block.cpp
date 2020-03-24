@@ -2,13 +2,17 @@
 #include <sstream>
 #include "sha256.h"
 
-Block::Block(uint32_t IndexIn, const std::string &DataIn) : _Index(IndexIn), _Data(DataIn) {
+Block::Block(uint32_t index, const std::string data) : _Index(index), _Data(data) {
     _Nonce = -1;
     _Time = time(nullptr);
 }
 
 std::string Block::GetHash() {
     return _Hash;
+}
+
+uint32_t Block::GetIndex() {
+    return _Index;
 }
 
 void Block::MineBlock(uint32_t difficulty) {
@@ -27,6 +31,6 @@ void Block::MineBlock(uint32_t difficulty) {
 
 inline std::string Block::_CalculateHash() const {
     std::stringstream ss;
-    ss << _Index << _Time << _Data << _Nonce << PrevHash;
+    ss << _Index << _Time << _Data << _Nonce << _PrevHash;
     return sha256(ss.str());
 }
