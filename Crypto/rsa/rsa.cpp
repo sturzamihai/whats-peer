@@ -7,6 +7,7 @@
 #include <boost/math/common_factor.hpp>
 #include "../Utils/base64/base64.h"
 #include <boost/lexical_cast.hpp>
+#include <tuple>
 
 template<typename T>
 T modpow(T base, T exp, T modulus) {
@@ -38,38 +39,97 @@ bool RSA::_IsPrime(uint64_t n) {
 }
 
 uint64_t RSA::_CalculateD(uint64_t e, uint64_t t) {
-    uint64_t k = 1;
-    while (k % e != 0) {
-        k += t;
-    }
-    return k / e;
+    e = e % t;
+    for (uint64_t x = 1; x < t; x++)
+        if ((e * x) % t == 1)
+            return x;
 }
 
 uint64_t RSA::_CalculateEncryption(uint64_t d, uint64_t key, uint64_t n) {
     uint64_t res = modpow<uint64_t>(d, key, n); // calculate the encrypted value
-    std::cout << res << " " << std::endl;
     return res;
 }
 
-std::string RSA::Encrypt(const std::string data, uint64_t publicKey) {
-    std::string encrypted = "";
+std::string RSA::Encrypt(const std::string data, std::string publicKey) {
+    auto keys = _HandleKeys(publicKey);
+    uint64_t n = std::get<0>(keys);
+    uint64_t k = std::get<1>(keys);
+
+    std::vector<uint64_t> values;
+    uint64_t maxlen = 0, currlen = 0;
+    // add every encrypted character into our vector and determine the max length
     for (uint64_t i = 0; i < data.length(); i++) { // iterate the message
-        encrypted.append(std::to_string(_CalculateEncryption(data[i], publicKey, _n))); // append changes
-        encrypted.append(",");
+        values.push_back(_CalculateEncryption(data[i], k, n));
+        currlen = std::to_string(values.back()).length();
+        if (currlen > maxlen) maxlen = currlen;
     }
-    return base64_encode(reinterpret_cast<const unsigned char *>(encrypted.c_str()), encrypted.size());
+
+    std::string encrypted = "";
+    encrypted.append(std::to_string(maxlen));
+    encrypted.append("s");
+    for (uint64_t i = 0; i < values.size(); i++) {
+        // pad the encrypted data with 0 in the beginning until required size is met
+        currlen = std::to_string(values[i]).length();
+        if (currlen < maxlen) {
+            for (uint64_t j = currlen; j < maxlen; j++) {
+                encrypted.append("0");
+            }
+            encrypted.append(std::to_string(values[i])); // add the rest of the data in the final string
+        } else {
+            encrypted.append(std::to_string(values[i]));
+        }
+    }
+
+    return base64_encode(reinterpret_cast<const unsigned char *>(encrypted.c_str()),
+                         encrypted.size()); // export it as base64
 }
 
-std::string RSA::Decrypt(const std::string data, uint64_t privateKey) {
-    std::string encrypted = base64_decode(data);
-    size_t poz = 0;
-    std::string decrypted = "";
-    while ((poz = encrypted.find(",")) != std::string::npos) {
-        decrypted.append(std::string(1, (char) _CalculateEncryption(
-                boost::lexical_cast<uint64_t>(encrypted.substr(0, poz)), privateKey, _n)));
-        encrypted.erase(0, poz + 1);
+std::tuple<uint64_t, uint64_t> RSA::_HandleKeys(std::string key) {
+    key = base64_decode(key);
+    try {
+        uint64_t n = boost::lexical_cast<uint64_t>(key.substr(1, key.find(",") - 1));
+        key.pop_back();
+        key.erase(0, key.find(",") + 1);
+        uint64_t k = boost::lexical_cast<uint64_t>(key);
+        return std::make_tuple(n, k);
     }
-    return base64_encode(reinterpret_cast<const unsigned char *>(decrypted.c_str()), decrypted.size());
+    catch (boost::bad_lexical_cast) {
+        throw std::runtime_error("Invalid key format. Expected a tuple from N and key.");
+    }
+}
+
+std::string RSA::Decrypt(const std::string data, std::string privateKey) {
+    std::string encrypted = base64_decode(data);
+    auto keys = _HandleKeys(privateKey);
+    uint64_t n = std::get<0>(keys);
+    uint64_t k = std::get<1>(keys);
+    // find the sequence pattern
+    uint64_t seq = boost::lexical_cast<uint64_t>(encrypted.substr(0, encrypted.find("s")));
+    encrypted.erase(0, encrypted.find("s") + 1);
+    std::string decrypted = "";
+    // explore sequences until the end of the file
+    while (encrypted.length() > 0) {
+        decrypted.append(std::string(1, (char) _CalculateEncryption(
+                boost::lexical_cast<uint64_t>(encrypted.substr(0, seq)), k,
+                n))); // add them to the decrypted string
+        encrypted.erase(0, seq);
+    }
+    return decrypted; // return the final string
+}
+
+Keychain RSA::ShowKeys() {
+    Keychain final;
+    final.publicKey = _CreateKey(_n, _e);
+    final.privateKey = _CreateKey(_n, _d);
+    return final;
+}
+
+std::string RSA::_CreateKey(uint64_t n, uint64_t k) {
+    std::string pair;
+    pair.append("("), pair.append(std::to_string(n));
+    pair.append(","), pair.append(std::to_string(k)), pair.append(")");
+    return base64_encode(reinterpret_cast<const unsigned char *>(pair.c_str()),
+                         pair.size());
 }
 
 RSA::RSA() {
@@ -111,6 +171,5 @@ RSA::RSA() {
     // compute d - the modular multiplicative inverse of _e modulo _phi.
     _d = _CalculateD(_e, _phi);
 
-    std::cout << _e << " " << _d << " " << _n << std::endl;
 }
 

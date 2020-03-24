@@ -4,12 +4,20 @@
 #include <cstdint>
 #include <string>
 
+struct Keychain {
+    std::string publicKey;
+    std::string privateKey;
+};
+
 class RSA {
 public:
     RSA();
 
-    std::string Encrypt(std::string data, uint64_t publicKey); // TODO(Mihai): Make them static
-    std::string Decrypt(std::string data, uint64_t privateKey);
+    static std::string Encrypt(std::string data, std::string publicKey);
+
+    static std::string Decrypt(std::string data, std::string privateKey);
+
+    Keychain ShowKeys();
 
 private:
     uint64_t _p;
@@ -25,7 +33,11 @@ private:
 
     static uint64_t _CalculateD(uint64_t e, uint64_t t);
 
-    uint64_t _CalculateEncryption(uint64_t d, uint64_t key, uint64_t n);
+    static uint64_t _CalculateEncryption(uint64_t d, uint64_t key, uint64_t n);
+
+    static std::tuple<uint64_t, uint64_t> _HandleKeys(std::string key);
+
+    std::string _CreateKey(uint64_t n, uint64_t k);
 };
 
 
