@@ -6,8 +6,11 @@
 class Block {
 public:
     std::string PrevHash;
-    Block(uint32_t IndexIn, const string &DataIn);
+
+    Block(uint32_t IndexIn, const std::string &DataIn);
+
     std::string GetHash();
+
     void MineBlock(uint32_t Difficulty);
 
 private:
