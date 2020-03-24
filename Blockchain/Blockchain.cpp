@@ -1,16 +1,14 @@
 #include "Blockchain.h"
+#include <iostream>
 
-Blockchain::Blockchain(uint32_t difficulty) {
-    _Chain.emplace_back(Block(0, "Genesis Block"));
-    _Difficulty = difficulty;
+
+Block Blockchain::GetLast() {
+    if (_Node.empty()) {
+    } else {
+        return _Node.back(); // We fetch the latest block that was added to our node
+    }
 }
 
-void Blockchain::AddBlock(Block nBlock) {
-    nBlock.PrevHash = _GetLastBlock().GetHash();
-    nBlock.MineBlock(_Difficulty);
-    _Chain.push_back(nBlock);
-}
-
-Block Blockchain::_GetLastBlock() const {
-    return _Chain.back();
+void Blockchain::AddBlock(Block NewBlock) {
+    _Node.push_back(NewBlock); // We are adding a new block to the node
 }

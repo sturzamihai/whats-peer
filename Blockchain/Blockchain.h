@@ -2,20 +2,20 @@
 #define BLOCKCHAIN_BLOCKCHAIN_H
 
 #include <cstdint>
+#include <iostream>
 #include <vector>
 #include "Block.h"
 
 class Blockchain {
 public:
-    Blockchain(uint32_t difficulty);
 
-    void AddBlock(Block nBlock);
+    Block GetLast();
+
+    void AddBlock(Block NewBlock);
 
 private:
-    uint32_t _Difficulty;
-    std::vector<Block> _Chain;
-
-    Block _GetLastBlock() const;
+    std::vector<Block> _Node = {};
 };
+
 
 #endif //BLOCKCHAIN_BLOCKCHAIN_H
